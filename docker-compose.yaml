@@ -1,0 +1,26 @@
+version: '3.9'
+
+# The Docker services.
+services:
+
+  EremeevVV_cashback_memory:
+    container_name: cashback_memory
+    hostname: cashback_memory
+    user: ${USER_ID}:${GROUP_ID}
+    tty: true
+    build:
+      context: .
+      args:
+        USER_ID: ${USER_ID}
+        GROUP_ID: ${GROUP_ID}
+        USERNAME: ${USERNAME}
+    image: EremeevVV/cashback_memory:${VERSION}
+    restart: unless-stopped
+    networks:
+      - EremeevVV_network
+
+
+networks:
+  EremeevVV_network:
+    name: EremeevVV_network
+    driver: bridge

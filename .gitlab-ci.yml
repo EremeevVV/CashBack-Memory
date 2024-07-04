@@ -1,0 +1,52 @@
+stages:
+  - venv
+  - tests
+  - build_deploy
+default:
+  tags:
+    - runner.run_trainer
+
+venv:
+  stage: venv
+  script:
+    - poetry env use python3.12
+    - export POETRY_REQUESTS_TIMEOUT=100
+    - export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+    - poetry install --verbose --no-interaction --no-cache --sync
+
+lint:
+  stage: tests
+  only:
+    - master
+  variables:
+    GIT_CHECKOUT: "false"
+  script:
+    - scripts/lint.sh
+
+static-analysis:
+  stage: tests
+  only:
+    - master
+  variables:
+    GIT_CHECKOUT: "false"
+  script:
+    - scripts/static-analysis.sh
+
+testing:
+  stage: tests
+  only:
+    - master
+  variables:
+    GIT_CHECKOUT: "false"
+  script:
+    - scripts/testing.sh
+
+
+build_deploy:
+  stage: build_deploy
+  only:
+    - master
+  script:
+    - scripts/docker_build.sh
+    - scripts/docker_run.sh
+

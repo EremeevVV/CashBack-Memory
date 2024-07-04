@@ -1,0 +1,96 @@
+[tool.poetry]
+name = "CashBack-Memory"
+version = "0.1.0"
+description = "Memorize all available cahback"
+authors = ["Vladimir Eremeev"]
+readme = "README.md"
+packages = [{include = "cashback_memory"}]
+
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.6.3"
+pydantic-settings = "^2.2.1"
+
+
+[tool.poetry.group.lint.dependencies]
+ruff = "^0.3.2"
+pyupgrade-directories = "^0.3.0"
+
+
+[tool.poetry.group.static-analysis.dependencies]
+types-pyyaml = "^6.0.12.20240311"
+types-setuptools = "^69.1.0.20240310"
+types-ujson = "^5.9.0.0"
+mypy = "^1.9.0"
+bandit = "^1.7.8"
+
+
+[tool.poetry.group.testing.dependencies]
+pytest = "^8.1.1"
+pytest-asyncio = "^0.23.5.post1"
+
+[tool.poetry.group.development.dependencies]
+pre-commit = "^3.6.0"
+
+[tool.pytest.ini_options]
+filterwarnings =["ignore::DeprecationWarning"]
+addopts = [
+    "--import-mode=importlib",
+]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+ignore_missing_imports = true
+install_types = true
+non_interactive = true
+
+# from https://blog.wolt.com/engineering/2021/09/30/professional-grade-mypy-configuration/
+disallow_untyped_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+show_error_codes = true
+warn_unused_ignores = true
+
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+disallow_any_unimported = false
+
+[tool.ruff]
+fix = true
+unsafe-fixes = true
+line-length = 120
+select = ["ALL"]
+ignore = ["D1", "D203", "D213", "FA102", "ANN101", "COM812", "ISC001","Q000"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+no-lines-before = ["standard-library", "local-folder"]
+known-third-party = []
+known-local-folder = ["whole_app"]
+lines-after-imports = 2
+
+[tool.ruff.extend-per-file-ignores]
+"tests/*.py" = [
+    "ANN001",
+    "ANN002",
+    "ANN003",
+    "ANN401",
+    "S101",
+    "PLR2004",
+    "S311",
+]
+"tests/_fixtures.py" = ["E501"]
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.bandit]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

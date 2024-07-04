@@ -1,0 +1,15 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: lint
+        name: lint
+        entry: ./scripts/lint.sh
+        language: script
+    -   id: static-analysis
+        name: static-analysis
+        entry: ./scripts/static-analysis.sh
+        language: script
+    -   id: testing
+        name: testing
+        entry: ./scripts/testing.sh
+        language: script
