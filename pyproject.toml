@@ -11,6 +11,8 @@ packages = [{include = "cashback_memory"}]
 python = "^3.12"
 pydantic = "^2.6.3"
 pydantic-settings = "^2.2.1"
+sqlalchemy = "^2.0.31"
+pytz = "^2024.1"
 
 
 [tool.poetry.group.lint.dependencies]
