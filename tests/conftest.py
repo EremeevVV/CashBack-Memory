@@ -2,13 +2,20 @@ from collections.abc import Generator
 from datetime import date
 
 import pytest
-from sqlalchemy import Engine, create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from cashback_memory.db import model
+import pytest_asyncio
 
 
-def populate_db(session: Session) -> None:
+# @event.listens_for(AsyncEngine, "connect")
+# def set_sqlite_pragma(dbapi_connection, connection_record) -> None:
+#     cursor = dbapi_connection.cursor()
+#     cursor.execute("PRAGMA foreign_keys=ON")
+#     cursor.close()
+
+
+async def populate_db(session: AsyncSession) -> None:
     session.add_all([
         model.Category(name='Рестораны', description='Там кормят и должны быть официанты'),
         model.Category(name='Одежда и обувь', description='Магазины, где продают трусы, носки, сандали и т.д.'),
@@ -30,18 +37,30 @@ def populate_db(session: Session) -> None:
         model.Promotion(start_date=date(2024, 2, 1),
                         end_date=date(2024, 2, 3), percent=100, card_id=4, category_id=3),
     ])
+    await session.commit()
 
 
 @pytest.fixture(scope='session')
-def in_memory_engine() -> Engine:
-    return create_engine('sqlite:///:memory:')
+def in_memory_engine() -> AsyncEngine:
+    return create_async_engine('sqlite+aiosqlite:///:memory:')
 
 
-@pytest.fixture(scope='session')
-def mock_session(in_memory_engine) -> Generator[Session, None, None]:
-    model.Base.metadata.create_all(in_memory_engine)
-    session_maker = sessionmaker(bind=in_memory_engine, expire_on_commit=False)
-    with session_maker() as session:
-        populate_db(session)
-        session.commit()
+@pytest_asyncio.fixture
+async def mock_session(in_memory_engine) -> Generator[AsyncSession, None, None]:
+    session_maker = async_sessionmaker(bind=in_memory_engine, expire_on_commit=False)
+    await create_tables(in_memory_engine)
+    async with session_maker() as session:
+        await populate_db(session)
+        await session.commit()
         yield session
+    await drop_tables(in_memory_engine)
+
+
+async def create_tables(in_memory_engine:AsyncEngine) -> None:
+    async with in_memory_engine.begin() as conn:
+        await conn.run_sync(model.Base.metadata.create_all)
+
+
+async def drop_tables(in_memory_engine:AsyncEngine) -> None:
+    async with in_memory_engine.begin() as conn:
+        await conn.run_sync(model.Base.metadata.drop_all)
