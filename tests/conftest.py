@@ -2,17 +2,16 @@ from collections.abc import Generator
 from datetime import date
 
 import pytest
+import pytest_asyncio
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from cashback_memory.db import model
-import pytest_asyncio
 
 
-# @event.listens_for(AsyncEngine, "connect")
-# def set_sqlite_pragma(dbapi_connection, connection_record) -> None:
-#     cursor = dbapi_connection.cursor()
-#     cursor.execute("PRAGMA foreign_keys=ON")
-#     cursor.close()
+async def set_sqlite_pragma(engine: AsyncEngine) -> None:
+    async with engine.connect() as connection:
+        await connection.execute(text("PRAGMA foreign_keys=ON"))
 
 
 async def populate_db(session: AsyncSession) -> None:
@@ -42,11 +41,12 @@ async def populate_db(session: AsyncSession) -> None:
 
 @pytest.fixture(scope='session')
 def in_memory_engine() -> AsyncEngine:
-    return create_async_engine('sqlite+aiosqlite:///:memory:')
+    return create_async_engine('sqlite+aiosqlite:///:memory:', connect_args={'check_same_thread': False})
 
 
 @pytest_asyncio.fixture
 async def mock_session(in_memory_engine) -> Generator[AsyncSession, None, None]:
+    await set_sqlite_pragma(in_memory_engine)
     session_maker = async_sessionmaker(bind=in_memory_engine, expire_on_commit=False)
     await create_tables(in_memory_engine)
     async with session_maker() as session:
@@ -56,11 +56,11 @@ async def mock_session(in_memory_engine) -> Generator[AsyncSession, None, None]:
     await drop_tables(in_memory_engine)
 
 
-async def create_tables(in_memory_engine:AsyncEngine) -> None:
+async def create_tables(in_memory_engine: AsyncEngine) -> None:
     async with in_memory_engine.begin() as conn:
         await conn.run_sync(model.Base.metadata.create_all)
 
 
-async def drop_tables(in_memory_engine:AsyncEngine) -> None:
+async def drop_tables(in_memory_engine: AsyncEngine) -> None:
     async with in_memory_engine.begin() as conn:
         await conn.run_sync(model.Base.metadata.drop_all)
