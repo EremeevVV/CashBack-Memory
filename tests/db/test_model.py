@@ -4,7 +4,7 @@ from sqlalchemy import select
 from cashback_memory.db import model
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_init_db(mock_session) -> None:
     stm = select(model.Promotion)
     promos = await mock_session.scalars(stm)

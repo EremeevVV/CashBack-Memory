@@ -1,18 +1,23 @@
-from typing import Any, Type
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from cashback_memory import exception
 from cashback_memory.db.model import Base
 
 
 class Repository:
-    def __init__(self, model: Type[Base], session: AsyncSession) -> None:
+    def __init__(self, model: type[Base], session: AsyncSession) -> None:
         self.session = session
         self.model = model
 
     async def get(self, identity: int) -> Base:
-        return await self.session.scalar(select(self.model).filter_by(id=identity))
+        if instance := await self.session.scalar(select(self.model).filter_by(id=identity)):
+            return instance
+        raise exception.NotFoundError(identity)
+
+
 
     async def list(self) -> list[Base]:
         scalars = await self.session.scalars(select(self.model))
